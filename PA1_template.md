@@ -1,12 +1,5 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=6, fig.path='figure/', warning=FALSE, message=FALSE)
-```
+# Reproducible Research: Peer Assessment 1
+
 ## Introduction
 
 It is now possible to collect a large amount of data about personal movement
@@ -45,35 +38,14 @@ The variables included in this dataset are:
     
 ## Loading and preprocessing the data
 
-```{r initialise, echo=FALSE}
-# remove everything from the workspace and set the working directory...
-rm(list = ls())
-setwd('W://code//R-Stats//Coursera//05 - ReproducibleResearch Assgn01')
 
-# Define the data directory and create it if necessary... 
-dataDir         <- "./data"
-if(!dir.exists(dataDir)){
-    dir.create(dataDir)
-}
-
-# Define the data files and download and unzip the data if necessary... 
-dataZip         <- paste(dataDir, "repdata%2Fdata%2Factivity.zip", sep="/")
-dataActivity    <- paste(dataDir, "activity.csv", sep="/")
-
-if(!file.exists(dataActivity)){
-    if(!file.exists(dataZip)){
-        url<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
-        download.file(url,destfile = dataZip)
-    }
-    unzip(dataZip, exdir=dataDir) 
-}
-```
 
 Once the data is downloaded, it should be loaded and the **date** variable
 converted from a character string into *date* format. At this stage 3 important
 libraries are loaded for use with date manipulation and plotting.
 
-```{r preprocess}
+
+```r
 # Read the activity data, preprocess and load libraries... 
 library(plyr)
 library(reshape2)
@@ -87,7 +59,8 @@ activity$date   <- as.Date(activity$date, "%Y-%m-%d")
 To calculate the mean total number of steps per day, the dataset was melted and
 reshaped as a summary table giving total steps per day.  
 
-```{r activity-summary}
+
+```r
 # melt and reshape the activity data to give overall summary... 
 melt01.activity <- melt(activity, id.vars="date", measure.vars="steps")
 sum01.activity  <- ddply(melt01.activity, .(date), summarise, sum=sum(value))
@@ -95,10 +68,11 @@ daily.mean    <- mean(sum01.activity$sum, na.rm=TRUE)
 daily.median  <- median(sum01.activity$sum, na.rm=TRUE)
 ```
 
-The mean and median number of total steps per day are `r as.integer(daily.mean)`
-and `r as.integer(daily.median)` respectively. The summary histogram was generated using ggplot.
+The mean and median number of total steps per day are 10766
+and 10765 respectively. The summary histogram was generated using ggplot.
 
-```{r activity-histogram}
+
+```r
 # plot histogram of the daily totals... 
 g <- ggplot(sum01.activity, aes(x=factor(date), y=sum))
 g   + geom_bar(stat="identity") +
@@ -107,13 +81,16 @@ g   + geom_bar(stat="identity") +
     xlab("Date") + ylab("Total Steps")
 ```
 
+![](figure/activity-histogram-1.png)<!-- -->
+
 ## What is the average daily activity pattern?
 
 To calculate the mean number of steps in a given 5 minute interval, the dataset
 was melted and reshaped as a summary table giving the mean and the median number
 of steps in each 5 minute interval. 
 
-```{r activity-daily-mk1}
+
+```r
 # melt and reshape the activity data to give daily summaries... 
 melt02.activity <- melt(activity, id.vars="interval", measure.vars="steps")
 sum02.activity  <- ddply(melt02.activity, .(interval), summarise,
@@ -122,10 +99,11 @@ interval.max <- sum02.activity[which.max(sum02.activity$mean),1]
 ```
 
 The 5 minute interval with the highest number of steps averaged across all the
-days is `r as.integer(interval.max)`. The time series plot was again created
+days is 835. The time series plot was again created
 using ggplot.
 
-```{r activity-timeseries-mk1}
+
+```r
 # plot time-series of the mean interval data over the day... 
 g <- ggplot(sum02.activity, aes(x=interval, y=mean))
 g   + geom_line() +
@@ -135,13 +113,16 @@ g   + geom_line() +
     xlab("Interval") + ylab("Total Steps")
 ```
 
+![](figure/activity-timeseries-mk1-1.png)<!-- -->
+
 ## Imputing missing values
-```{r missing-values}
+
+```r
 # calculate the number of NA's
 total.NAs <- sum(is.na(activity$steps))
 ```
 
-The total number of NA's in the activity dataset is `r total.NAs`. 
+The total number of NA's in the activity dataset is 2304. 
 
 In order to replace the missing values (NA), firstly the mean variable from
 summary table giving the mean and median number of steps in each 5 minute
@@ -149,7 +130,8 @@ interval was used. The vector of means was repeated by the number of days in the
 dataset to generate a vector matching the length of the activity data, and then
 substitued in wherever the **steps** variable was equal to NA.
 
-```{r activity-summary-NAmean}
+
+```r
 # replace NAs with mean steps for the same interval
 activity$stepsNAmean   <- activity$steps
 mean.repeat            <- rep(sum02.activity$mean,length(unique(activity$date)))
@@ -163,10 +145,11 @@ daily.NAmean.median  <- median(sum03.activity$sum, na.rm=TRUE)
 ```
 To calculate the mean total number of steps per day, the dataset was melted and
 reshaped as before to give the total steps per day. The revised mean and median
-are `r as.integer(daily.NAmean.mean)` and `r as.integer(daily.NAmean.median)`
+are 10766 and 10766
 respectively. The summary histogram was again generated using ggplot.
 
-```{r activity-histogram-NAmean}
+
+```r
 # plot histogram of the daily totals using the mean substitution... 
 g <- ggplot(sum03.activity, aes(x=factor(date), y=sum))
 g   + geom_bar(stat="identity") +
@@ -175,13 +158,16 @@ g   + geom_bar(stat="identity") +
     xlab("Date") + ylab("Total Steps")
 ```
 
+![](figure/activity-histogram-NAmean-1.png)<!-- -->
+
 It was observed that the median variable from the summary table giving the mean
 and median number of steps in each 5 minute interval might give an alternative
 method of replacing the missing (NA) values. The substitution was repeated as
 before using a replacement vector created of by repeating the vector of medians
 by the number of days.
 
-```{r activity-summary-NAmedian}
+
+```r
 # replace NAs with median steps for the same interval
 activity$stepsNAmedian <- activity$steps
 median.repeat          <- rep(sum02.activity$median,length(unique(activity$date)))
@@ -196,10 +182,11 @@ daily.NAmedian.median  <- median(sum04.activity$sum, na.rm=TRUE)
 
 To calculate the mean total number of steps per day, the dataset was once again
 melted and reshaped as before to give the total steps per day. The revised mean
-and median are `r as.integer(daily.NAmedian.mean)` and `r as.integer(daily.NAmedian.median)`
+and median are 9503 and 10395
 respectively. The summary histogram was again generated using ggplot.
 
-```{r activity-histogram-NAmedian}
+
+```r
 # plot histogram of the daily totals using the median substitution... 
 g <- ggplot(sum04.activity, aes(x=factor(date), y=sum))
 g   + geom_bar(stat="identity") +
@@ -207,6 +194,8 @@ g   + geom_bar(stat="identity") +
     theme(plot.margin = unit(c(24,48,12,8),"points")) +
     xlab("Date") + ylab("Total Steps")
 ```
+
+![](figure/activity-histogram-NAmedian-1.png)<!-- -->
 
 Comparison of the shapes of the histograms of the uncorrected data and for the
 data with NA substitution by the mean and median respectively shows that the
@@ -218,7 +207,8 @@ therefore used for the final part of the assignment.
 The activity data was assigned a factor variable **daytype** stating whether it
 was recorded on a weekday or at a weekend. 
 
-```{r activity-weekday-and-weekend}
+
+```r
 weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
 weekends <- c("Saturday", "Sunday")
 activity$weekdays <- weekdays(activity$date)
@@ -233,14 +223,16 @@ the summary table was generated as a function of both **interval** and
 **daytype**, allowing ggplot to be used to generate a multipanel time series
 plot illustrating the difference between weeday and weekend activity.
 
-```{r activity-daily-mk2}
+
+```r
 # melt and reshape the activity data to give daily summaries... 
 melt05.activity <- melt(activity, id.vars=c("interval","daytype"), measure.vars="stepsNAmedian")
 sum05.activity  <- ddply(melt05.activity, .(interval,daytype), summarise,
         mean=mean(value, na.rm=TRUE), median=median(value, na.rm=TRUE))
 ```
 
-```{r activity-timeseries-mk2}
+
+```r
 # plot time-series of the mean interval data over the day for both weedays and weekends... 
 g <- ggplot(sum05.activity, aes(x=interval, y=mean))
 g   + geom_line() + facet_wrap(~daytype, ncol=1) +
@@ -249,3 +241,5 @@ g   + geom_line() + facet_wrap(~daytype, ncol=1) +
     theme(plot.margin = unit(c(24,48,12,8),"points")) +
     xlab("Interval") + ylab("Total Steps")
 ```
+
+![](figure/activity-timeseries-mk2-1.png)<!-- -->
